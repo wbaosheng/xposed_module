@@ -25,7 +25,25 @@ public class Main implements IXposedHookLoadPackage {
             hookApplicationThreadScheduleCreateService(lpparam);
             hookActivityThreadHandleCreateService(lpparam);
         }
+        if (lpparam.packageName.equals("com.baidu.homework")) {
+            hookPrivateInfo(lpparam);
+        }
 
+    }
+
+    private void hookPrivateInfo(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
+        final Class<?> telephoneManager = lpparam.classLoader.loadClass("android.telephony.TelephonyManager");
+        XposedHelpers.findAndHookMethod(telephoneManager, "getDeviceId", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                XposedBridge.log(">>> beforeHookedMethod " + telephoneManager + "::getDeviceId");
+                StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+                for (StackTraceElement element : stackTraceElements) {
+                    XposedBridge.log("    >>>>>>" + element.toString());
+                }
+            }
+        });
     }
 
     @SuppressLint("PrivateApi")
