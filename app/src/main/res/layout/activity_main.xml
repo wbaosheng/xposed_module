@@ -6,9 +6,76 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/root"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:layout_height="match_parent"
+        android:layout_margin="5dp">
+
+        <TextView
+            android:id="@+id/tv_package_hint"
+            android:layout_width="80dp"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:text="输入包名："
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <EditText
+            android:id="@+id/et_package_name"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            app:layout_constraintLeft_toRightOf="@id/tv_package_hint"
+            app:layout_constraintRight_toLeftOf="@id/bt_ok"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth="match_constraint" />
+
+        <Button
+            android:id="@+id/bt_ok"
+            android:layout_width="80dp"
+            android:layout_height="40dp"
+            app:layout_constraintLeft_toRightOf="@id/et_package_name"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:text="确认"/>
+        <TextView
+            android:id="@+id/tv_package_name"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_package_hint"
+            app:layout_constraintRight_toRightOf="parent"/>
+        <TextView
+            android:id="@+id/tv_debug_webview"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:gravity="center_vertical"
+            android:text="调试WebView："
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_package_name"/>
+        <RadioGroup
+            android:id="@+id/webview_group"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:checkedButton="@id/debug_wv_no"
+            app:layout_constraintLeft_toRightOf="@id/tv_debug_webview"
+            app:layout_constraintTop_toBottomOf="@id/tv_package_name"
+            app:layout_constraintRight_toRightOf="parent">
+            <RadioButton
+                android:id="@+id/debug_wv_yes"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="是"/>
+            <RadioButton
+                android:id="@+id/debug_wv_no"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="否"/>
+        </RadioGroup>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>

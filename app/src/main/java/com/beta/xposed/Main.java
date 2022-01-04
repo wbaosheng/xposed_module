@@ -2,42 +2,203 @@ package com.beta.xposed;
 
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.IBinder;
 
+import com.beta.xposed.monitor.PrivacyMonitor;
+import com.beta.xposed.monitor.method.NormalMethodList;
+import com.beta.xposed.webview.DebugWebView;
+import com.beta.xposed.webview.WebViewMethodList;
+
 import java.lang.reflect.Field;
 
+import de.robv.android.xposed.IXposedHookInitPackageResources;
 import de.robv.android.xposed.IXposedHookLoadPackage;
+import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import de.robv.android.xposed.callbacks.XC_InitPackageResources;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-public class Main implements IXposedHookLoadPackage {
+public class Main implements IXposedHookLoadPackage, IXposedHookZygoteInit, IXposedHookInitPackageResources {
+
+    private static XSharedPreferences getPref(String path) {
+        XSharedPreferences pref = new XSharedPreferences(BuildConfig.APPLICATION_ID, path);
+        return pref.getFile().canRead() ? pref : null;
+    }
+
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        XposedBridge.log("handleLoadPackage 开始执行");
-        if (lpparam.packageName.equals("com.beta.browser")) {
-            XposedBridge.log("开始执行 com.beta.browser 的hook");
-            hookContextImplStartService(lpparam);
-            hookApplicationThreadScheduleCreateService(lpparam);
-            hookActivityThreadHandleCreateService(lpparam);
-        }
-        if (lpparam.packageName.equals("com.baidu.homework")) {
-            hookPrivateInfo(lpparam);
-        }
+    public void initZygote(StartupParam startupParam) throws Throwable {
 
     }
 
-    private void hookPrivateInfo(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
-        final Class<?> telephoneManager = lpparam.classLoader.loadClass("android.telephony.TelephonyManager");
-        XposedHelpers.findAndHookMethod(telephoneManager, "getDeviceId", new XC_MethodHook() {
+    @Override
+    public void handleInitPackageResources(XC_InitPackageResources.InitPackageResourcesParam resparam) throws Throwable {
+
+    }
+
+    @Override
+    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        XSharedPreferences prefs = getPref(Const.pref_config);
+        String pkgName = "";
+        if (prefs != null) {
+            pkgName = prefs.getString(Const.pref_key_pkgname, "");
+        }
+        if (lpparam.packageName.equals(pkgName)) {
+            XposedBridge.log("配置要hook的包名: " + pkgName);
+            // DexHook.start(lpparam);
+            PrivacyMonitor.start(lpparam.processName, new NormalMethodList());
+
+            boolean debug = false;
+            if (prefs != null) {
+                debug = prefs.getBoolean(Const.pref_key_debug_wv, false);
+            }
+            if (debug) {
+                DebugWebView.INSTANCE.start(new WebViewMethodList());
+            }
+        }
+        // if (lpparam.packageName.equals("com.beta.xposed")
+        // ) {
+        //     DexHook.start(lpparam);
+        //     PrivacyMonitor.start(lpparam.processName, new NormalMethodList());
+        //     // hookSecureGetString(lpparam);
+        //     // hookNetworkInterfaceGetHardwareAddress(lpparam);
+        //     // hookWifiInfo(lpparam);
+        //     // hookWifiInfoGetMacAddress(lpparam);
+        //     // hookWifiInfoGetSSID(lpparam);
+        //     // hookWifiInfoGetIpAddress(lpparam);
+        //     // hookInetAddressGetHostAddress(lpparam);
+        //     // hooktest(lpparam);
+        // }
+
+    }
+
+    private void hooktest(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
+        final Class<?> clazz = lpparam.classLoader.loadClass("com.qiyukf.unicorn.api.Unicorn");
+        XposedHelpers.findAndHookMethod(clazz, "initSdk", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
-                XposedBridge.log(">>> beforeHookedMethod " + telephoneManager + "::getDeviceId");
+                XposedBridge.log(">>> beforeHookedMethod: " + clazz.getName());
+                StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+                for (StackTraceElement element : stackTraceElements) {
+                    XposedBridge.log("    >>>>>>" + element.toString());
+                }
+            }
+        });
+    }
+
+    @SuppressLint("PrivateApi")
+    private void hookSecureGetString(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
+        final Class<?> secure = lpparam.classLoader.loadClass("android.provider.Settings$Secure");
+        XposedHelpers.findAndHookMethod(secure, "getString", ContentResolver.class, String.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                if ("android_id".equals(param.args[1])) {
+                    XposedBridge.log(">>> beforeHookedMethod " + secure + " " + param.args[1]);
+                    StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+                    for (StackTraceElement element : stackTraceElements) {
+                        XposedBridge.log("    >>>>>>" + element.toString());
+                    }
+                }
+            }
+        });
+    }
+
+    @SuppressLint("PrivateApi")
+    private void hookWifiInfo(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
+        final Class<?> wifiInfo = lpparam.classLoader.loadClass("android.net.wifi.WifiManager");
+        XposedHelpers.findAndHookMethod(wifiInfo, "getConnectionInfo", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                XposedBridge.log(">>> beforeHookedMethod " + wifiInfo + "::getConnectionInfo");
+                StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+                for (StackTraceElement element : stackTraceElements) {
+                    XposedBridge.log("    >>>>>>" + element.toString());
+                }
+            }
+        });
+    }
+
+    @SuppressLint("PrivateApi")
+    private void hookWifiInfoGetMacAddress(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
+        final Class<?> wifiInfo = lpparam.classLoader.loadClass("android.net.wifi.WifiInfo");
+        XposedHelpers.findAndHookMethod(wifiInfo, "getMacAddress", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                XposedBridge.log(">>> beforeHookedMethod " + wifiInfo + "::getMacAddress");
+                StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+                for (StackTraceElement element : stackTraceElements) {
+                    XposedBridge.log("    >>>>>>" + element.toString());
+                }
+            }
+        });
+    }
+
+    @SuppressLint("PrivateApi")
+    private void hookWifiInfoGetSSID(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
+        final Class<?> wifiInfo = lpparam.classLoader.loadClass("android.net.wifi.WifiInfo");
+        XposedHelpers.findAndHookMethod(wifiInfo, "getSSID", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                XposedBridge.log(">>> beforeHookedMethod " + wifiInfo + "::getSSID");
+                StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+                for (StackTraceElement element : stackTraceElements) {
+                    XposedBridge.log("    >>>>>>" + element.toString());
+                }
+            }
+        });
+    }
+
+    @SuppressLint("PrivateApi")
+    private void hookWifiInfoGetIpAddress(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
+        final Class<?> wifiInfo = lpparam.classLoader.loadClass("android.net.wifi.WifiInfo");
+        XposedHelpers.findAndHookMethod(wifiInfo, "getIpAddress", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                XposedBridge.log(">>> beforeHookedMethod " + wifiInfo + "::getIpAddress");
+                StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+                for (StackTraceElement element : stackTraceElements) {
+                    XposedBridge.log("    >>>>>>" + element.toString());
+                }
+            }
+        });
+    }
+
+    @SuppressLint("PrivateApi")
+    private void hookNetworkInterfaceGetHardwareAddress(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
+        final Class<?> netWorkInterface = lpparam.classLoader.loadClass("java.net.NetworkInterface");
+        XposedHelpers.findAndHookMethod(netWorkInterface, "getHardwareAddress", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                XposedBridge.log(">>> beforeHookedMethod " + netWorkInterface + "::getHardwareAddress");
+                StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+                for (StackTraceElement element : stackTraceElements) {
+                    XposedBridge.log("    >>>>>>" + element.toString());
+                }
+            }
+        });
+    }
+
+    @SuppressLint("PrivateApi")
+    private void hookInetAddressGetHostAddress(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
+        final Class<?> inetAddress = lpparam.classLoader.loadClass("java.net.InetAddress");
+        XposedHelpers.findAndHookMethod(inetAddress, "getHostAddress", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                XposedBridge.log(">>> beforeHookedMethod " + inetAddress + "::getHostAddress");
                 StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
                 for (StackTraceElement element : stackTraceElements) {
                     XposedBridge.log("    >>>>>>" + element.toString());
@@ -48,7 +209,7 @@ public class Main implements IXposedHookLoadPackage {
 
     @SuppressLint("PrivateApi")
     private void hookActivityThreadHandleCreateService(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        Class ActivityThread = lpparam.classLoader.loadClass("android.app.ActivityThread");
+        Class<?> ActivityThread = lpparam.classLoader.loadClass("android.app.ActivityThread");
         Class CreateServiceData = lpparam.classLoader.loadClass("android.app.ActivityThread$CreateServiceData");
         final Field info_field = CreateServiceData.getDeclaredField("info");
         info_field.setAccessible(true);
