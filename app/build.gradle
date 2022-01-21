@@ -17,6 +17,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    signingConfigs {
+        debug {
+            keyAlias 'beta'
+            keyPassword 'com.beta.xposed'
+            storeFile file("debug")
+            storePassword 'com.beta.xposed'
+        }
+    }
     buildToolsVersion '29.0.2'
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
