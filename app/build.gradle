@@ -21,7 +21,7 @@ android {
         debug {
             keyAlias 'beta'
             keyPassword 'com.beta.xposed'
-            storeFile file("debug")
+            storeFile file("debug.jks")
             storePassword 'com.beta.xposed'
         }
     }
