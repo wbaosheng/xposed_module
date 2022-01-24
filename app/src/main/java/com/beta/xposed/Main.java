@@ -14,6 +14,7 @@ import com.beta.xposed.webview.DebugWebView;
 import com.beta.xposed.webview.WebViewMethodList;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import de.robv.android.xposed.IXposedHookInitPackageResources;
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -28,8 +29,17 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 public class Main implements IXposedHookLoadPackage, IXposedHookZygoteInit, IXposedHookInitPackageResources {
 
     private static XSharedPreferences getPref(String path) {
-        XSharedPreferences pref = new XSharedPreferences(BuildConfig.APPLICATION_ID, path);
-        return pref.getFile().canRead() ? pref : null;
+        XSharedPreferences pref;
+        try {
+            pref = new XSharedPreferences(BuildConfig.APPLICATION_ID, path);
+            if (pref.getFile() == null || !pref.getFile().canRead()) {
+                pref = null;
+            }
+        } catch (Exception e) {
+            pref = null;
+            XposedBridge.log("pref: " + e.getMessage());
+        }
+        return pref;
     }
 
     @Override
@@ -42,23 +52,42 @@ public class Main implements IXposedHookLoadPackage, IXposedHookZygoteInit, IXpo
 
     }
 
+    private String getProp(String key) {
+        String value = "";
+        try {
+            Class<?> clazz = Class.forName("android.os.SystemProperties");
+            Method method = clazz.getMethod("get", String.class);
+            method.setAccessible(true);
+            value = (String) method.invoke(null, key);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return value;
+    }
+
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
+        // 获取包名
+        String pkgName = getProp("com.beta.pkg");
         XSharedPreferences prefs = getPref(Const.pref_config);
-        String pkgName = "";
         if (prefs != null) {
-            pkgName = prefs.getString(Const.pref_key_pkgname, "");
+            pkgName = prefs.getString(Const.pref_key_pkgname, pkgName);
         }
+
+        // 是否debugWebview
+        String webview = getProp("com.beta.webview");
+        boolean debugWv = "1".equals(webview);
+        if (prefs != null) {
+            debugWv = prefs.getBoolean(Const.pref_key_debug_wv, debugWv);
+        }
+
+        XposedBridge.log("配置要hook的包名: >>> " + pkgName);
         if (lpparam.packageName.equals(pkgName)) {
             XposedBridge.log("配置要hook的包名: " + pkgName);
             // DexHook.start(lpparam);
             PrivacyMonitor.start(lpparam.processName, new NormalMethodList());
 
-            boolean debug = false;
-            if (prefs != null) {
-                debug = prefs.getBoolean(Const.pref_key_debug_wv, false);
-            }
-            if (debug) {
+            if (debugWv) {
                 DebugWebView.INSTANCE.start(new WebViewMethodList());
             }
         }

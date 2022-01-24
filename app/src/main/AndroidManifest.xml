@@ -21,10 +21,10 @@
         <meta-data
             android:name="xposeddescription"
             android:value="hook inspect" />
-        <!-- 最低xposed版本号(lib文件名可知) -->
+        <!-- 最低xposed版本号(lib文件名可知)，93是正常版本 -->
         <meta-data
             android:name="xposedminversion"
-            android:value="93" />
+            android:value="90" />
 
         <activity
             android:name=".MainActivity"
