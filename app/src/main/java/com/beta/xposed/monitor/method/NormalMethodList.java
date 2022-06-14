@@ -123,6 +123,7 @@ public class NormalMethodList implements HookMethodList {
         ClassMethodGroup pkgManagerHook = new ClassMethodGroup("android.app.ApplicationPackageManager");
         pkgManagerHook.addMethod("getInstalledPackagesAsUser");
         pkgManagerHook.addMethod("getInstalledApplicationsAsUser");
+        pkgManagerHook.addMethod("queryIntentActivities");
         list.add(pkgManagerHook);
         //SmsManager    短信
         ClassMethodGroup smsManagerHook = new ClassMethodGroup("android.telephony.SmsManager");

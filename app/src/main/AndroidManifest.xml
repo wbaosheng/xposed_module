@@ -24,7 +24,7 @@
         <!-- 最低xposed版本号(lib文件名可知)，93是正常版本 -->
         <meta-data
             android:name="xposedminversion"
-            android:value="90" />
+            android:value="89" />
 
         <activity
             android:name=".MainActivity"
