@@ -61,6 +61,7 @@ public class NormalMethodList implements HookMethodList {
         list.add(new MethodWrapper(NetworkInterface.class, "getHardwareAddress"));
         //-----ssid
         list.add(new MethodWrapper(WifiInfo.class, "getSSID"));
+        list.add(new MethodWrapper(WifiInfo.class, "getBSSID"));
         list.add(new MethodWrapper(NetworkInfo.class, "getExtraInfo"));
 
 
@@ -76,7 +77,7 @@ public class NormalMethodList implements HookMethodList {
         //--屏幕
         list.add(new MethodWrapper(MediaRecorder.class, "start"));
         list.add(new MethodWrapper(MediaRecorder.class, "prepare"));
-        list.add(new MethodWrapper(ImageReader.class, "acquireLatestImage"));
+        // list.add(new MethodWrapper(ImageReader.class, "acquireLatestImage"));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             list.add(new MethodWrapper(SurfaceControl.class, "screenshot", Rect.class, Integer.TYPE, Integer.TYPE, Boolean.TYPE, Integer.TYPE));
         }
