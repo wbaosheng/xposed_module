@@ -1,5 +1,6 @@
 package com.beta.xposed.monitor.handle;
 
+import android.os.Process;
 import android.util.Log;
 
 import com.beta.xposed.monitor.PrivacyMonitor;
@@ -21,7 +22,7 @@ public class MethodHandler extends XC_MethodHook {
         StringBuilder stringBuilder = new StringBuilder();
         for (StackTraceElement temp : stackTraceElements) {
             String line = temp.toString();
-            boolean isEpic = line.startsWith("EdHooker_");
+            boolean isEpic = line.startsWith("EdHooker_") || line.startsWith("LSPHooker_") ;
 
             if (!skip && !isEpic) {
                 stringBuilder.append(line);
