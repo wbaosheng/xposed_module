@@ -108,12 +108,13 @@ public class Main implements IXposedHookLoadPackage, IXposedHookZygoteInit, IXpo
     }
 
     private void hooktest(XC_LoadPackage.LoadPackageParam lpparam) throws ClassNotFoundException {
-        final Class<?> clazz = lpparam.classLoader.loadClass("com.qiyukf.unicorn.api.Unicorn");
-        XposedHelpers.findAndHookMethod(clazz, "initSdk", new XC_MethodHook() {
+        final Class<?> clazz = lpparam.classLoader.loadClass("android.app.ApplicationPackageManager");
+        XposedHelpers.findAndHookMethod(clazz, "getPackageInfo", String.class, int.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
-                XposedBridge.log(">>> beforeHookedMethod: " + clazz.getName());
+                XposedBridge.log(">>> beforeHookedMethod: " + clazz.getName() + ", " + param.method.getName() + ", "
+                + param.args[0]);
                 StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
                 for (StackTraceElement element : stackTraceElements) {
                     XposedBridge.log("    >>>>>>" + element.toString());

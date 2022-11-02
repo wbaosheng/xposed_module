@@ -8,6 +8,7 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanSettings;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.graphics.Rect;
 import android.hardware.Camera;
@@ -125,6 +126,7 @@ public class NormalMethodList implements HookMethodList {
         pkgManagerHook.addMethod("getInstalledPackagesAsUser");
         pkgManagerHook.addMethod("getInstalledApplicationsAsUser");
         pkgManagerHook.addMethod("queryIntentActivities");
+        pkgManagerHook.addMethod("getPackageInfoAsUser");
         list.add(pkgManagerHook);
         //SmsManager    短信
         ClassMethodGroup smsManagerHook = new ClassMethodGroup("android.telephony.SmsManager");
